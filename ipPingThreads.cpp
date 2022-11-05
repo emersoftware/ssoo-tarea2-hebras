@@ -36,11 +36,12 @@ public:
 
 };
 
+//Funcion auxiliar para ejecutar el comando ping.
 string pingCommand(string ip, string packets){
   string command = "ping -c " + packets + " " + ip;
   string result = "";
 
-  //Se crea un puntero a FILE para almacenar el resultado del comando
+  //Se abre el comando con popen y se almacena en el puntero a FILE result. Se retorna el resultado del comando. 
   FILE *in;
   char buff[512];
   if(!(in = popen(command.c_str(), "r"))){
@@ -53,13 +54,14 @@ string pingCommand(string ip, string packets){
   return result;
 }
 
+//Funcion para obtener los datos de la ip, se ejecuta en un hilo.
 void pingIp(string ip, string packets, ipData *ipData){
   string result = pingCommand(ip, packets);
   if(result==""){
     cout << "Error: No se pudo ejecutar el comando ping." << ip << endl;
     return;
   }
-  //Se obtienen los datos de la ip a partir del resultado del comando
+  //Se obtienen los datos de la ip a partir del resultado del comando. 
   int packetsTransmitted = 0;
   int packetsReceived = 0;
   int packetsLost = 0;
@@ -81,7 +83,7 @@ void pingIp(string ip, string packets, ipData *ipData){
     status = "Up";
   }
 
-  //Se almacenan los datos de la ip en un objeto de la clase ipData del arreglo
+  //Se almacenan los datos de la ip en su correspondiente objeto del arreglo.
   ipData->setData(ip, packetsTransmitted, packetsReceived, packetsLost, status);
   
 }
@@ -153,6 +155,7 @@ int main(int argc, char *argv[]) {
   ipData ipDataList[numLines];
 
   //Se crean los hilos, un hilo por cada ip. Cada hilo ejecuta la funcion pingIp.
+  //Se le pasa como argumento la ip, el numero de paquetes y el objeto de la clase ipData correspondiente.
   for (i=0; i < numLines; i++) {
     threads[i] = thread(pingIp, ipList[i], argv[2], &ipDataList[i]);
   }
