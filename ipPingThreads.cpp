@@ -7,7 +7,7 @@
 using namespace std;
 //Emerson Benjamín Salazar Rubilar
 
-//Create a class to hold the data for each ip
+//Clase ipData para almacenar los datos de cada ip
 class ipData{
 public:
     string ip;
@@ -16,7 +16,7 @@ public:
     int packetsLost;
     string status;
 
-    //Default constructor
+    //Constructor de la clase ipData por defecto
     ipData(){
         ip = "";
         packetsTransmitted = 0;
@@ -25,7 +25,7 @@ public:
         status = "Down";
     }
 
-    //Setter all data
+    //Setters de la clase ipData
     void setData(string ip, int packetsTransmitted, int packetsReceived, int packetsLost, string status){
         this->ip = ip;
         this->packetsTransmitted = packetsTransmitted;
@@ -40,7 +40,7 @@ string pingCommand(string ip, string packets){
   string command = "ping -c " + packets + " " + ip;
   string result = "";
 
-  //Ping the ip and get the result in result variable
+  //Se crea un puntero a FILE para almacenar el resultado del comando
   FILE *in;
   char buff[512];
   if(!(in = popen(command.c_str(), "r"))){
@@ -59,7 +59,7 @@ void pingIp(string ip, string packets, ipData *ipData){
     cout << "Error: No se pudo ejecutar el comando ping." << ip << endl;
     return;
   }
-  //Get data from the result
+  //Se obtienen los datos de la ip a partir del resultado del comando
   int packetsTransmitted = 0;
   int packetsReceived = 0;
   int packetsLost = 0;
@@ -74,7 +74,6 @@ void pingIp(string ip, string packets, ipData *ipData){
       packetsReceived = stoi(line.substr(line.find("transmitted, ")+13, line.find(" received")-line.find("transmitted, ")+13));
     }
     if(line.find("packet loss") != string::npos){
-      //Get the number of packets lost considering the number of packets transmitted and packetsLostPorcentage variable which is the porcentage of packets lost.
       packetsLost = stoi(line.substr(line.find("received, ")+10, line.find(" packet loss")-line.find("received, ")+10))/100*packetsTransmitted;
     }
   }
@@ -82,17 +81,14 @@ void pingIp(string ip, string packets, ipData *ipData){
     status = "Up";
   }
 
-  //Set the data in the ipData object
+  //Se almacenan los datos de la ip en un objeto de la clase ipData del arreglo
   ipData->setData(ip, packetsTransmitted, packetsReceived, packetsLost, status);
   
-  //cout << "IP: " << ip << "Packets: Sent = " << packetsTransmitted << ", Received = " << packetsReceived << ", Lost = " << packetsLost << " , Status = " << status << endl;
-
-
 }
 
 
 int main(int argc, char *argv[]) {
-  //Check if the number of arguments is correct
+  //Verificación de argumentos de entrada, se debe ingresar el nombre del archivo y el número de paquetes
   if(argv[1] == NULL){
     cout << "Error: No se ingreso el archivo de ips." << endl;
     cout << "Uso: ./pingIpThreads archivo.txt numerodepaquetes"<< endl;
@@ -111,7 +107,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  //Verification argv[2] is a number
+  //Verificacion del tipo de dato del argumento 2, debe ser el numero de paquetes
   for(int i = 0; i < strlen(argv[2]); i++){
     if(!isdigit(argv[2][i])){
       cout << "Error: El numero de paquetes debe ser un numero." << endl;
@@ -120,14 +116,14 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  //Verification argv[1] is a txt file
+  //Verificacion del tipo de dato del argumento 1, debe ser el nombre del archivo con extension .txt
   string fileName = argv[1];
   if(fileName.substr(fileName.find_last_of(".") + 1) != "txt"){
     cout << "Error: El archivo de ips debe ser un archivo .txt." << endl;
     return 0;
   }
   
-  //Get the number of lines from .txt file in argv[1] and store it.
+  //Se cuenta el numero de lineas del archivo para saber el numero de ips
   int numLines = 0;
   string line;
   ifstream txtFile (argv[1]);
@@ -139,10 +135,10 @@ int main(int argc, char *argv[]) {
     numLines++;
   }
 
-  //Create an array of strings with the lines of the .txt file. Called ipList.
+  //Se crea un arreglo string para almacenar las ips
   string ipList[numLines];
 
-  //Read the .txt file again and store the lines in the array.
+  //Se almacenan las ips en el arreglo
   txtFile.clear();
   txtFile.seekg(0, ios::beg);
   int i = 0;
@@ -151,22 +147,24 @@ int main(int argc, char *argv[]) {
     i++;
   }
 
-  //Create an array of threads with the number of lines in the file.
+  //Se crea un arreglo de hilos
   thread threads[numLines];
-  //Create an array of ipData with the number of lines in the file.
+  //Se crea un arreglo de objetos de la clase ipData
   ipData ipDataList[numLines];
 
-  //Create a thread for each line in the file.
+  //Se crean los hilos, un hilo por cada ip. Cada hilo ejecuta la funcion pingIp.
   for (i=0; i < numLines; i++) {
     threads[i] = thread(pingIp, ipList[i], argv[2], &ipDataList[i]);
   }
 
-  //Join all threads.
+  //Se espera a que terminen los hilos
   for (i=0; i < numLines; i++) {
     threads[i].join();
   }
-  //Print the data of each ip from ipDataList.
+  //Se cierra el archivo
+  txtFile.close();
 
+  //Se imprime la tabla con los datos de las ip.
   cout << "IP\t\t\tTrans.\tRec.\tLost\tStatus" << endl;
   cout << "--------------------------------------------------------" << endl;
   for (i=0; i < numLines; i++) {
@@ -176,8 +174,7 @@ int main(int argc, char *argv[]) {
       cout << ipDataList[i].ip << "\t\t" << ipDataList[i].packetsTransmitted << "\t" << ipDataList[i].packetsReceived << "\t" << ipDataList[i].packetsLost << "\t" << ipDataList[i].status << endl;
     else 
       cout << ipDataList[i].ip << "\t\t\t" << ipDataList[i].packetsTransmitted << "\t" << ipDataList[i].packetsReceived << "\t" << ipDataList[i].packetsLost << "\t" << ipDataList[i].status << endl;
-  }
-  txtFile.close();
+  }  
 
   return 0;
 }
