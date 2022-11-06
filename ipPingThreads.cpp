@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
   string fileName = argv[1];
   if(fileName.substr(fileName.find_last_of(".") + 1) != "txt"){
     cout << "Error: El archivo de ips debe ser un archivo .txt." << endl;
+    cout << "Uso: ./pingIpThreads archivo.txt numerodepaquetes"<< endl;
     return 0;
   }
   
